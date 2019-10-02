@@ -20,6 +20,7 @@ remDr = rD$client
 # 2. Wejście na główną stronę transfmarket.pl
 
 remDr$navigate(url = "https://www.transfermarkt.pl/")
+Sys.sleep(time = 0.5) # usypiam działanie kodu aby strona mogła się załadować
 
 # 3. Wybranie okna wyszukiwarki na stronie oraz wpisanie wyszukiwanej drużyny
 
@@ -32,6 +33,7 @@ webElem$highlightElement()
 # wyszukuję drużynę
 team = 'Jagiellonia Białystok'
 webElem$sendKeysToElement(list(team, key = "enter"))
+Sys.sleep(time = 0.5) # usypiam działanie kodu aby strona mogła się załadować
 
 # 4. Wybieram pierwszą drużynę na stronie (najczęściej zespoły mają jakieś 
 #swoje poddróżyny grające w niższych ligach)
@@ -43,6 +45,7 @@ webElem2$highlightElement()
 
 # wybieram ten element - klikam w niego
 webElem2$clickElement()
+Sys.sleep(time = 0.5) # usypiam działanie kodu aby strona mogła się załadować
 
 # 5. Przechodzę do widoku szczegółowego zespołu
 
@@ -54,6 +57,7 @@ webElem3$highlightElement()
 
 # klikam w niego
 webElem3$clickElement()
+Sys.sleep(time = 0.5) # usypiam działanie kodu aby strona mogła się załadować
 
 # 6. Wyciagam wszystkie dane na temat zawodnikow
 
@@ -94,7 +98,7 @@ name = map_chr(index, function(id){
 # 5. Za pomocą pakiety rvest przygotowuję sobie tabelę do pobrania
 
 # tworze slownik miesiecy który mi się przyda do tłumaczenia polskich nazw miesięcy na angielskie
-month_dict = data.frame(month = c("sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "list", "gru"),
+month_dict = data.frame(month = c("sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"),
                               en_month = month.abb)
 
 players_info_FromHTML = webElem3$getCurrentUrl() %>% # wybieram link do strony na której aktualnie się znajduję 
