@@ -1,26 +1,39 @@
 # install.packages('RSelenium')
 # install.packages('rvest')
-# install.packages('stringi')
+# install.packages('stringr')
 # install.packages('tidyverse')
 # install.packages('lubridate')
 # install.packages('purrr')
+# install.packages('webshot')
+# install.packages("Rcrawler")
+# install.packages("magick")
+# install.packages("fs")
 library(RSelenium)
 library(rvest)
-library(stringi)
+library(stringr)
 library(tidyverse)
 library(lubridate)
 library(purrr)
+library(webshot)
+library(Rcrawler)
+library(magick)
+library(fs)
+
+# wybierz ścieżki zapisu danych oraz obrazów (bez ostatniego '/')
+
+path = c("/Users/black/Documents/R/web_scraping_notatki")
+
 
 # 1. Połączenie się z serwerem za pomocą Rselenium
 
-rD = rsDriver(browser = 'chrome', port=4444L, chromever = '76.0.3809.126')
+rD = rsDriver(browser = 'chrome', port=4445L, chromever = '76.0.3809.126')
 
 remDr = rD$client
 
 # 2. Wejście na główną stronę transfmarket.pl
 
 remDr$navigate(url = "https://www.transfermarkt.pl/")
-Sys.sleep(time = 0.5) # usypiam działanie kodu aby strona mogła się załadować
+Sys.sleep(time = 1) # usypiam działanie kodu aby strona mogła się załadować
 
 # 3. Wybranie okna wyszukiwarki na stronie oraz wpisanie wyszukiwanej drużyny
 
@@ -33,7 +46,7 @@ webElem$highlightElement()
 # wyszukuję drużynę
 team = 'Jagiellonia Białystok'
 webElem$sendKeysToElement(list(team, key = "enter"))
-Sys.sleep(time = 0.5) # usypiam działanie kodu aby strona mogła się załadować
+Sys.sleep(time = 1) # usypiam działanie kodu aby strona mogła się załadować
 
 # 4. Wybieram pierwszą drużynę na stronie (najczęściej zespoły mają jakieś 
 #swoje poddróżyny grające w niższych ligach)
@@ -45,19 +58,24 @@ webElem2$highlightElement()
 
 # wybieram ten element - klikam w niego
 webElem2$clickElement()
-Sys.sleep(time = 0.5) # usypiam działanie kodu aby strona mogła się załadować
+Sys.sleep(time = 1) # usypiam działanie kodu aby strona mogła się załadować
 
 # 5. Przechodzę do widoku szczegółowego zespołu
 
 # Znajduję element który odpowiada za przejście do widoku szczegółowego
 webElem3 = remDr$findElement(using = "xpath", '//*[contains(concat( " ", @class, " " ), concat( " ", "kartei-number-2", " " ))]//*[contains(concat( " ", @class, " " ), concat( " ", "kartei-button-body", " " ))]')
 
-# podświetlam sobie ten element
-webElem3$highlightElement()
 
-# klikam w niego
-webElem3$clickElement()
-Sys.sleep(time = 0.5) # usypiam działanie kodu aby strona mogła się załadować
+
+url = webElem3$getCurrentUrl()
+
+while (url != "https://www.transfermarkt.pl/jagiellonia-bia%C5%82ystok/kader/verein/2300/saison_id/2019/plus/1") {
+  webElem3$clickElement()
+  webElem3$highlightElement() # podświetlam sobie ten element
+  url = webElem3$getCurrentUrl() # klikam w niego
+}
+
+Sys.sleep(time = 1) # usypiam działanie kodu aby strona mogła się załadować
 
 # 6. Wyciagam wszystkie dane na temat zawodnikow
 
@@ -70,7 +88,7 @@ links = unlist(sapply(getAllLinks, function(x){x$getElementAttribute("href")}))
 # linki do poszczególnych piłkarzy są otagowane zawsze w ten sam sposób 
 # (pojawia się w nich forma: 'profil/spieler')
 # wyciagam więc linki do poszczególnych piłkarzy
-players = which(stri_detect(links, regex = 'profil/spieler') == TRUE)
+players = which(str_detect(links, pattern = 'profil/spieler') == TRUE)
 
 # strona jest także zbudowana na wersje mobilne i do nich się skaluje
 # wobec tego linki się powtarzają. Linki do stron pełnowymiarowych 
@@ -138,5 +156,39 @@ players_info_table = players_info_FromHTML %>%
          w_druzynie_od = ymd(w_druzynie_od)) %>%
   select(-mnoznik, - month)
 
+saveRDS(players_info_table, paste0(path, "/players_info.rds"))
+
+#----
+
+web_players = links[index]
+
+path_to_images = paste0(path, "/images_src") 
+
+dir.create(path_to_images)
+
+# webshot::install_phantomjs()
+install_browser()
+run_browser(debugLevel = "INFO", timeout = 6000)
+
+for (player in 1:length(web_players)) {
+  remDr$navigate(url = web_players[player])
+  Sys.sleep(1)
+  getAllimgs = remDr$findElements(using = "css selector", "img")
+  imgs = unlist(sapply(getAllimgs, function(x){x$getElementAttribute("src")}))
+  path_to_img_save = paste0(path_to_images, "/", name[player], ".png")
+  webshot(url = imgs[str_detect(imgs, 'portrait')][1], file = path_to_img_save)
+  print(paste0("Image for ", name[player], " saved!!!"))
+  Sys.sleep(1)
+}
+
+
+images_files = dir_ls(path_to_images) %>% as.character()
+
+map(images_files, function(file){
+  image_read(file) %>%
+    image_crop("139x182") %>%
+    image_write(path = file, format = "png")
+  print(paste0("done: ", file))
+})
 
 remDr$close()
