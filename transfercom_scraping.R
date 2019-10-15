@@ -204,5 +204,5 @@ map(images_files, function(file){
   print(paste0("done: ", file))
 })
 
-# zamykam zdalną przeglądarkę.
+# zamykam zdalną przeglądarkę.  cos tam testuje
 remDr$close()
