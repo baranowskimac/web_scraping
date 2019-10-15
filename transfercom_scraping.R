@@ -65,9 +65,10 @@ Sys.sleep(time = 1) # usypiam działanie kodu aby strona mogła się załadować
 # Znajduję element który odpowiada za przejście do widoku szczegółowego
 webElem3 = remDr$findElement(using = "xpath", '//*[contains(concat( " ", @class, " " ), concat( " ", "kartei-number-2", " " ))]//*[contains(concat( " ", @class, " " ), concat( " ", "kartei-button-body", " " ))]')
 
-
-
 url = webElem3$getCurrentUrl()
+
+# pętla jest wrzucona tutaj aby strona mogła sie załadować do interesującego mnie momentu
+# wyjście z pętli następuje dopiero gdy przejdzie do właściwej strony drużyny jagielloni
 
 while (url != "https://www.transfermarkt.pl/jagiellonia-bia%C5%82ystok/kader/verein/2300/saison_id/2019/plus/1") {
   webElem3$clickElement()
@@ -146,44 +147,56 @@ players_info_table = players_info_FromHTML %>%
                                   mnoznik == 'mln' ~ as.numeric(format(wartosc_euro * 10000), scientific=F))) %>% # przemnażam wartość przez odpowiedni mnożnik
   # przekształcam rok urodzenia oraz czas w drużynie na angielski format
   separate(rok_urodzenia, into = c("day", "month", "year"), sep = " ") %>% 
-  left_join(month_dict, by = "month") %>%
-  unite("rok_urodzenia", year, en_month, day, sep = " ") %>%
+  left_join(month_dict, by = "month") %>% # łączę z wcześniej przygotowaną tabelą dotyczącą miesięcy (tłumaczenie miesięcy)
+  unite("rok_urodzenia", year, en_month, day, sep = " ") %>% # złączam kolumny z datami od kiedy zawodnik gra w drużynie w jedną (wcześniej je rozbijalem aby przetłumaczyć nazwę miesięcy)
   select(-month) %>%
-  separate(w_druzynie_od, into = c("day", "month", "year"), sep = " ") %>%
-  left_join(month_dict, by = "month") %>%
-  unite("w_druzynie_od", year, en_month, day, sep = " ") %>%
+  separate(w_druzynie_od, into = c("day", "month", "year"), sep = " ") %>% # rozdzielam datę od kiedy zawodnik gra w drużynie
+  left_join(month_dict, by = "month") %>% # tłumaczę nazwy miesięcy (pakiety lubridate automatycznie przerzuca je na angielski)
+  unite("w_druzynie_od", year, en_month, day, sep = " ") %>% # złączam kolumny z datami od kiedy zawodnik gra w drużynie w jedną (wcześniej je rozbijalem aby przetłumaczyć nazwę miesięcy)
+  # zmieniam rok urodzenia oraz datę od kiedy są w drużynie na 'lubridate' (ymd) - tak aby potem można była ją spokojnie filtrować po datach (od najstarszej do najmłodszej etc.)
   mutate(rok_urodzenia = ymd(rok_urodzenia),
-         w_druzynie_od = ymd(w_druzynie_od)) %>%
-  select(-mnoznik, - month)
+         w_druzynie_od = ymd(w_druzynie_od)) %>% 
+  select(-mnoznik, - month) # usuwam niepotrzebne kolumny
 
-saveRDS(players_info_table, paste0(path, "/players_info.rds"))
+saveRDS(players_info_table, paste0(path, "/players_info.rds")) # zapisuję otrzymaną tabelę
 
 #----
 
-web_players = links[index]
+# wyciągam linki do poszczególnych zawodników
+web_players = links[index] 
 
+# wybieram ścieżkę zapisu zdjęć dla poszczególnych zawodników
 path_to_images = paste0(path, "/images_src") 
 
+# tworzę folder do zapisu zdjęć dla poszczególnych zawodników
 dir.create(path_to_images)
 
+# uruchamiam przeglądarkę do robnienia zrzutów ektanu, W razie problemów próbować odkomentować/zakomentować linijkę
+# z instalowaniem środowiska do zrzutów oraz można jeszcze próbować robić coś z timeoutem (zwiększać zmniejszać)
 # webshot::install_phantomjs()
 install_browser()
 run_browser(debugLevel = "INFO", timeout = 6000)
 
+# puszczam pętlę po likach do szczegółowych informacji o zawodniku
+# z każdej strony, gdzie są szczegółowe informacje o zawodniku będę wyciągał
+# zdjęcie danego zawodnika
+
 for (player in 1:length(web_players)) {
-  remDr$navigate(url = web_players[player])
-  Sys.sleep(1)
-  getAllimgs = remDr$findElements(using = "css selector", "img")
-  imgs = unlist(sapply(getAllimgs, function(x){x$getElementAttribute("src")}))
-  path_to_img_save = paste0(path_to_images, "/", name[player], ".png")
-  webshot(url = imgs[str_detect(imgs, 'portrait')][1], file = path_to_img_save)
-  print(paste0("Image for ", name[player], " saved!!!"))
+  remDr$navigate(url = web_players[player]) # przechodzę do strony danego zawodnika
+  Sys.sleep(1) # usypiam działanie kodu aby strona mogła się w pełni w wczytać
+  getAllimgs = remDr$findElements(using = "css selector", "img") # wyciągam wszystkie obrazy ze strony danego zawodnika
+  imgs = unlist(sapply(getAllimgs, function(x){x$getElementAttribute("src")})) # wyciągam linki do wszystkich zdjęć z strony danego zawodnika
+  path_to_img_save = paste0(path_to_images, "/", name[player], ".png") # wybieram ścieżkę zapisu danego zdjęcia, nadaję nazwę dla każdego zdjęcia z imieniem i nazwiskiem zawodnika (idzie wg kolejności występowania na stronie)
+  webshot(url = imgs[str_detect(imgs, 'portrait')][1], file = path_to_img_save) # robię screen dla danego zdjęcia (wiem że to te, ponieważ każde zdjęcie zawodnika ma powtarzającą się frazę potrait)
+  print(paste0("Image for ", name[player], " saved!!!")) # zapisuję obraz w podanej wcześniej ścieżce
   Sys.sleep(1)
 }
 
+# wybieram ścieżki do wszystkich obrazy które udało mi się zgrać (zdjęcia wszystkich zawodników). 
+# będzie mi to potrzebne do przeskalowania wszystkich zdjęć
+images_files = dir_ls(path_to_images) %>% as.character() 
 
-images_files = dir_ls(path_to_images) %>% as.character()
-
+# literuję się po każdej ścieżce do zdjęcia, otwieram je, zmieniam skalę i zapisuję ponownie
 map(images_files, function(file){
   image_read(file) %>%
     image_crop("139x182") %>%
@@ -191,4 +204,5 @@ map(images_files, function(file){
   print(paste0("done: ", file))
 })
 
+# zamykam zdalną przeglądarkę.
 remDr$close()
