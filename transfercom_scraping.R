@@ -26,7 +26,15 @@ path = c("/Users/black/Documents/R/web_scraping_notatki")
 
 # 1. Połączenie się z serwerem za pomocą Rselenium
 
-rD = rsDriver(browser = 'chrome', port=4445L, chromever = '76.0.3809.126')
+# 1.a połączenie się z serwerem chrome
+# rD = rsDriver(browser = 'chrome', port=4445L, chromever = '76.0.3809.126')
+
+# 1.b ominięcie problemów z połączeniem się z chrome - łączenie się z firefox
+# warto chyba najpierw odpalić tego firefoxa
+
+rD = rsDriver(browser = 'firefox', port=4443L, 
+              chromever = NULL)
+
 
 remDr = rD$client
 
@@ -204,5 +212,5 @@ map(images_files, function(file){
   print(paste0("done: ", file))
 })
 
-# zamykam zdalną przeglądarkę.  cos tam testuje
+# zamykam zdalną przeglądarkę.
 remDr$close()
