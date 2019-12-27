@@ -1,0 +1,57 @@
+---
+title: "Jagiellonia Team"
+author: "MEB"
+date: "12/27/2019"
+output: pdf_document
+params: 
+  filename: "Jagiellonia Team"
+---
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Jagiellonia Białystok
+
+Jagiellonia Białystok – polski klub piłkarski z siedzibą w Białymstoku występujący w Ekstraklasie. Zdobywca Pucharu Polski i Superpucharu Polski, srebrny i brązowy medalista mistrzostw Polski, 4-krotny mistrz Polski juniorów starszych oraz mistrz Polski juniorów młodszych. Najbardziej utytułowany klub piłkarski w północno-wschodniej Polsce. Klub zajmuje 18. miejsce w tabeli wszech czasów Ekstraklasy.
+
+# Drużyna
+
+```{r}
+library(dplyr)
+JagielloniaTeam = readRDS("players_info.rds") %>%
+  arrange(Nazwisko)
+library(knitr)
+kable(x = JagielloniaTeam, caption = "Drużyna Jagielloni Białystok sezon 2019/2020")
+```
+
+# Zdjęcia Zawodników
+
+```{r, results='asis', image}
+files <- list.files(path = paste0('images_src/'), 
+                    pattern = ".png$",
+                    full.names = TRUE)
+
+listOfPlots = map(files, function(x){
+  temp_p = ggdraw() + 
+    draw_image(x, scale = 0.7)
+  return(temp_p)
+})
+
+nazwiska = str_extract(files, pattern = "(?<=src/).*?(?=.png)")
+
+plot_grid(listOfPlots[[1]], listOfPlots[[2]], listOfPlots[[3]], 
+          listOfPlots[[4]], listOfPlots[[5]], listOfPlots[[6]],
+          listOfPlots[[7]], listOfPlots[[8]], listOfPlots[[9]],
+          listOfPlots[[10]], listOfPlots[[11]], listOfPlots[[12]],
+          listOfPlots[[13]], listOfPlots[[14]], listOfPlots[[15]],
+          listOfPlots[[16]], listOfPlots[[17]], listOfPlots[[18]],
+          listOfPlots[[19]], listOfPlots[[20]], listOfPlots[[21]],
+          listOfPlots[[22]], listOfPlots[[23]], listOfPlots[[24]],
+          listOfPlots[[25]], listOfPlots[[26]], listOfPlots[[27]],
+          listOfPlots[[28]], listOfPlots[[29]], listOfPlots[[30]],
+          listOfPlots[[31]],
+          labels = nazwiska, label_size = 8, label_colour = "grey30",
+          hjust = 0, vjust = 0.5
+          ) 
+
+```
