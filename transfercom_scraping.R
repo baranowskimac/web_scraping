@@ -2,26 +2,33 @@
 # install.packages('rvest')
 # install.packages('stringr')
 # install.packages('tidyverse')
+# install.packages("ggplot2")
 # install.packages('lubridate')
 # install.packages('purrr')
 # install.packages('webshot')
 # install.packages("Rcrawler")
 # install.packages("magick")
 # install.packages("fs")
+# install.packages("rmarkdown")
+# install.packages("cowplot")
 library(RSelenium)
 library(rvest)
 library(stringr)
 library(tidyverse)
+library(ggplot2)
 library(lubridate)
 library(purrr)
 library(webshot)
 library(Rcrawler)
 library(magick)
 library(fs)
+library(rmarkdown)
 
-# wybierz ścieżki zapisu danych oraz obrazów (bez ostatniego '/')
+# wybierz ścieżki do projektu - miejsce gdzie jest kod oraz plik rmd
+# do generowania pdf - tam będą zapisywać się dane oraz stamtąd będzie
+# się generował raport pdf)
 
-path = c("/Users/black/Documents/R/web_scraping_notatki")
+path = c("C:/Users/user/Documents/MyProjects/web_scraping/")
 
 
 # 1. Połączenie się z serwerem za pomocą Rselenium
@@ -214,3 +221,8 @@ map(images_files, function(file){
 
 # zamykam zdalną przeglądarkę.
 remDr$close()
+
+# generowanie raportu markdown
+
+rmarkdown::render(input = "Jagiellonia_markdown.Rmd", 
+                  output_file = "Jagiellonia Team.pdf")
